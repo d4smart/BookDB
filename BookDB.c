@@ -34,7 +34,8 @@ void GetBooks();
 int Sort(Book *insert, Book *pos, int way);
 void SortBooks(int way);
 void AddBooks();
-Book *FindBooks();
+void FindBooks();
+Book *Find();
 void ChangeInfo();
 void DeleteBooks();
 int IsBook(int way, char *key, Book *pos);
@@ -90,25 +91,25 @@ int main()
         }
     }
 
-    printf("正在退出操作...\n\n");
+    printf("\n\n正在退出操作...\n\n");
     SaveInFile();
 }
 
 void AddBooks()
 {
     char name[60] = "", category[40] = "", author[40] = "";
-    int date, ch;
+    int date, ch, num = 0;
     float price;
     Book *book = NULL;
     Book *pos = tail->pre;
 
-    printf("Now add books...\n");
+    printf("\n添加图书记录，按 ctrl+z(Windows)/ctrl+d(Linux) 退出\n");
     printf("Enter book's name, category, author, purchase date, price in order: \n=> ");
     while((ch = scanf("%s %s %s %d %f", name, category, author, &date, &price)) != EOF)
     {
         if (ch != 5)
         {
-            printf("Input format invalid, please try again.\n");
+            printf("图书输入格式不合法，请重新输入\n");
             printf("Enter book's name, category, author, purchase date, price in order: \n=> ");
             //printf("%d", ch);
             continue;
@@ -124,6 +125,8 @@ void AddBooks()
 
         InsertBook(book, pos);
         pos = pos->next;
+        num++;
+        printf("添加了%d本图书...\n", num);
 
         printf("Enter book's name, category, author, purchase date, price in order: \n=> ");
     }
@@ -131,26 +134,59 @@ void AddBooks()
     printf("Add complete. Bye!\n\n");
 }
 
-Book *FindBooks()
+void FindBooks()
+{
+    //char key[60] = "";
+    int finding = 1, c;
+    Book *book = NULL;
+
+    printf("查找图书记录\n");
+    while(finding)
+    {
+        book = Find();
+
+        if (book == NULL)
+        {
+            printf("\n未找到该记录...\n");
+        }
+        else
+        {
+            printf("\n找到记录！\n");
+            printf("书名\t\t\t类别\t\t作者\t\t购买日期\t价格\n");
+            printf("%-30s%-20s%-20s%8d\t%.2f\n", book->name, book->category, book->author, book->date, book->price);
+        }
+
+        printf("是否继续？（按0退出，其他数字继续）：");
+        scanf("%d", &c);
+        if (c == 0)
+        {
+            finding = 0;
+        }
+        printf("\n");
+    }
+}
+
+Book *Find()
 {
     char key[60] = "";
-    int date, way;
+    int way;
     Book *pos = head->next;
     Book *find = NULL;
 
-    printf("Please input the way to find: ");
+    printf("查找方式： 1.书名 2.分类 3.作者\n");
+    printf("请输入查找的方式：");
     scanf("%d", &way);
-    printf("Please input key: ");
+    printf("请输入查找字段的值：");
     scanf("%s", key);
 
     while(pos != tail)
     {
         if (IsBook(way, key, pos) == 0)
         {
-            printf("%-30s%-20s%-20s%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
+            //printf("%-30s%-20s%-20s%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
             find = pos;
+            break;
         }
-
         pos = pos->next;
     }
 
@@ -182,13 +218,14 @@ void ChangeInfo()
     float price;
     Book *change = NULL;
 
-    printf("CHANGE INFO\n");
-    printf("Choose which book to change...");
-    change = FindBooks();
+    printf("修改图书信息\n");
+    change = Find();
+    printf("记录原值：");
+    printf("%-30s%-20s%-20s%8d\t%.2f\n", change->name, change->category, change->author, change->date, change->price);
 
-    printf("Choose which info to change, (name,category,author,date,price)|(1,2,3,4,5): ");
+    printf("选择修改信息的类型 (name,category,author,date,price)|(1,2,3,4,5): ");
     scanf("%d", &way);
-    printf("Change to: ");
+    printf("修改为：");
 
     if (way == 1 || way == 2 || way == 3)
     {
@@ -224,21 +261,24 @@ void ChangeInfo()
         change->price = price;
     }
 
-    printf("Record changed to: ");
-    printf("%-30s%-20s%-20s%8d\t%.2f\n", change->name, change->category, change->author, change->date, change->price);
+    printf("记录被修改为：");
+    printf("%-30s%-20s%-20s%8d\t%.2f\n\n", change->name, change->category, change->author, change->date, change->price);
 }
 
 void DeleteBooks()
 {
     Book *del = NULL;
 
-    printf("DELETE INFO\n");
-    printf("Choose which book to delete...");
-    del = FindBooks();
+    printf("删除图书记录\n");
+    printf("请选择要删除的图书\n");
+    del = Find();
+    printf("要删除的图书：");
+    printf("%-30s%-20s%-20s%8d\t%.2f\n", del->name, del->category, del->author, del->date, del->price);
 
     del->pre->next = del->next;
     del->next->pre = del->pre;
     free(del);
+    printf("\n图书已删除...\n\n");
 }
     
 void InsertBook(Book *book, Book *pos)
@@ -373,6 +413,8 @@ void SortBooks(int way)
 
     Book *pos, *insert;
 
+    printf("\nSorting...\n");
+
     for(pos = head->next->next; pos != tail; pos = pos->next)
     {
         Book *tmp1, *tmp2;
@@ -402,6 +444,7 @@ void PrintBooks()
 {
     Book *pos = head->next;
 
+    printf("所有图书记录\n");
     printf("书名\t\t\t类别\t\t作者\t\t购买日期\t价格\n");
     while(pos != tail)
     {
