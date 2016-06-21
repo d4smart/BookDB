@@ -29,7 +29,26 @@ char filename[] = "archive.txt";
 void PrintBooks();
 void InsertBook(Book *tmp);
 void SaveInFile();
-void AddBook()
+void GetBooks();
+void AddBooks();
+void SortBooks();
+
+int main()
+{
+    char name[] = "金瓶梅(插图珍藏版)";
+    char category[] = "中国古典小说";
+    char author[] = "兰陵笑笑生";
+    int date = 20160620;
+    float price = 898.20;
+
+    //AddBooks();
+    GetBooks();
+    SortBooks();
+    PrintBooks();
+    SaveInFile();
+}
+
+void AddBooks()
 {
     char name[50] = "", category[20] = "", author[30] = "";
     int date, ch;
@@ -84,19 +103,6 @@ void AddBook()
     printf("Add complete. Bye!\n\n");
 }
 
-int main()
-{
-    char name[] = "金瓶梅(插图珍藏版)";
-    char category[] = "中国古典小说";
-    char author[] = "兰陵笑笑生";
-    int date = 20160620;
-    float price = 898.20;
-
-    AddBook();
-    PrintBooks();
-    SaveInFile();
-}
-
 void InsertBook(Book *tmp)
 {
     
@@ -121,6 +127,97 @@ void SaveInFile()
 
     fclose(fp);
     printf("Write to file!\n");
+}
+
+void GetBooks()
+{
+    FILE *fp;
+    char name[50] = "", category[20] = "", author[30] = "";
+    int date, ch;
+    float price;
+    head = NULL, tail = NULL;
+    Book *tmp = NULL;
+    
+    if((fp=fopen(filename,"r"))==NULL)
+    {
+        perror("fopen");
+        exit(1);
+    }
+    
+    while((ch = fscanf(fp, "%s %s %s %d %f", name, category, author, &date, &price)) != EOF)
+    { 
+        tmp = (Book *)malloc(sizeof(Book));
+
+        tmp->name = (char *)malloc(strlen(name)+1);
+        strcpy(tmp->name, name);
+
+        tmp->category = (char *)malloc(strlen(category)+1);
+        strcpy(tmp->category, category);
+
+        tmp->author = (char *)malloc(strlen(author)+1);
+        strcpy(tmp->author, author);
+        
+
+        tmp->date = date;
+        tmp->price = price;
+
+        if (!head)
+        {
+            head = tmp;
+            tail = head;
+        }
+        else
+        {
+            tail->next = tmp;
+            tmp->pre = tail;
+            tail = tail->next;
+        }
+    }
+
+    printf("Books getted.");
+}
+
+void SortBooks()
+{
+    if (head == NULL || head->next == NULL)
+        return;
+
+    int key = 0;
+    Book *pos, *insert;
+
+    for(pos = head->next; pos != NULL; pos = pos->next)
+    {
+        Book *tmp1, *tmp2;
+        key = pos->price;
+        insert = pos->pre;
+
+        while(insert != NULL && insert->price > key )
+        {
+            insert = insert->pre;
+        }
+
+        pos->pre->next = pos->next;
+        if(pos->next)
+        {
+            pos->next->pre = pos->pre;
+        }
+        tmp1 = pos->next;
+
+        tmp2 = insert->next;
+        insert->next = pos;
+        pos->pre = insert;
+        pos->next = tmp2;
+        tmp2->pre = pos;
+
+        if(tmp1)
+        {
+            pos = tmp1->pre;
+        }
+        else
+        {
+            pos = tail;
+        }
+    }
 }
 
 void PrintBooks()
