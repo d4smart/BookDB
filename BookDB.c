@@ -31,8 +31,8 @@ void PrintBooks();
 void InsertBook(Book *book, Book *pos);
 void SaveInFile();
 void GetBooks();
-void SortBooks();
-int Sort();
+int Sort(Book *insert, Book *pos, int way);
+void SortBooks(int way);
 void AddBooks();
 Book *FindBooks();
 void ChangeInfo();
@@ -41,20 +41,56 @@ int IsBook(int way, char *key, Book *pos);
 
 int main()
 {
-    char name[] = "金瓶梅(插图珍藏版)";
-    char category[] = "中国古典小说";
-    char author[] = "兰陵笑笑生";
-    int date = 20160620;
-    float price = 898.20;
+    int operation, processing = 1;
+
+    printf("\n欢迎来到图书管理系统，本系统由d4smart开发\n\n");
 
     GetBooks();
-    AddBooks();
-    PrintBooks();
-    //FindBooks();
-    //ChangeInfo();
-    SortBooks();
-    //DeleteBooks();
-    PrintBooks();
+
+    while(processing)
+    {
+        printf("输入数字选择操作： 1.查找图书记录 2.添加图书记录 3.修改图书记录 4.删除图书记录 5.打印全部图书记录 6.对图书记录排序并保存\n");
+        printf("请输入你要进行的操作，按 ctrl+z(Windows)/ctrl+d(Linux) 退出：");
+
+        if (scanf("%d", &operation) == EOF)
+        {
+            processing = 0;
+            continue;
+        }
+
+        if (operation < 1 || operation > 6)
+        {
+            printf("选择的操作不合法！\n\n");
+            continue;
+        }
+
+        if (operation == 1)
+        {
+            FindBooks();
+        }
+        else if (operation == 2)
+        {
+            AddBooks(); 
+        }
+        else if (operation == 3)
+        {
+            ChangeInfo();
+        }
+        else if (operation == 4)
+        {
+            DeleteBooks();
+        }
+        else if (operation == 5)
+        {
+            PrintBooks();
+        }
+        else
+        {
+            SortBooks(5);
+        }
+    }
+
+    printf("正在退出操作...\n\n");
     SaveInFile();
 }
 
@@ -194,15 +230,15 @@ void ChangeInfo()
 
 void DeleteBooks()
 {
-    Book *delete = NULL;
+    Book *del = NULL;
 
     printf("DELETE INFO\n");
     printf("Choose which book to delete...");
-    delete = FindBooks();
+    del = FindBooks();
 
-    delete->pre->next = delete->next;
-    delete->next->pre = delete->pre;
-    free(delete);
+    del->pre->next = del->next;
+    del->next->pre = del->pre;
+    free(del);
 }
     
 void InsertBook(Book *book, Book *pos)
@@ -235,12 +271,14 @@ void SaveInFile()
     FILE *fp;
     Book *pos = head->next;
 
+    printf("正在打开文件，请稍后...\n");
     if((fp=fopen(filename,"w"))==NULL)
     {
-        perror("fopen");
+        perror("文件打开失败！\n\n");
         exit(1);
     }
 
+    printf("文件已打开，正在写入数据...\n");
     while(pos != tail)
     {
         fprintf(fp, "%s\t%s\t%s\t%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
@@ -248,7 +286,7 @@ void SaveInFile()
     }
 
     fclose(fp);
-    printf("Write to file!\n");
+    printf("文件写入完毕！\n\n");
 }
 
 void GetBooks()
@@ -266,12 +304,14 @@ void GetBooks()
     Book *book = NULL;
     Book *pos = tail->pre;
     
+    printf("正在打开文件，请稍后...\n");
     if((fp=fopen(filename,"r"))==NULL)
     {
-        perror("fopen");
+        perror("文件打开失败！\n\n");
         exit(1);
     }
-    
+
+    printf("文件已打开，正在读取数据...\n");
     while((ch = fscanf(fp, "%s %s %s %d %f", name, category, author, &date, &price)) != EOF)
     { 
         book = (Book *)malloc(sizeof(Book));
@@ -286,24 +326,60 @@ void GetBooks()
         pos = pos->next;
     }
 
-    printf("Books getted.\n");
+    fclose(fp);
+    printf("数据读取完毕！\n\n");
 }
 
-void SortBooks()
+int Sort(Book *insert, Book *pos, int way)
+{
+    if (way == 1)
+    {
+        return strcmp(insert->name, pos->name);
+    }
+    else if (way == 2)
+    {
+        return strcmp(insert->category, pos->category);
+    }
+    else if (way == 3)
+    {
+        return strcmp(insert->author, pos->author);
+    }
+    else if (way == 4)
+    {
+        return insert->date - pos->date;
+    }
+    else if (way == 5)
+    {
+        if (insert->price > pos->price)
+            return 1;
+
+        else if (insert->price == pos->price)
+            return 0;
+
+        else
+            return -1;
+    }
+    else
+    {
+        printf("Sort: Input invalid!\n");
+        return 0;
+    }
+}
+
+void SortBooks(int way)
 {
     if (head->next == tail || head->next == tail->pre)
         return;
 
-    float key = 0;
     Book *pos, *insert;
 
     for(pos = head->next->next; pos != tail; pos = pos->next)
     {
         Book *tmp1, *tmp2;
-        key = pos->price;
+
         insert = pos->pre;
 
-        while(insert != head && insert->price > key)
+        while(insert != head && Sort(insert, pos, way) > 0)
         {
             insert = insert->pre;
         }
