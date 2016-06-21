@@ -191,7 +191,7 @@ void SortBooks()
         key = pos->price;
         insert = pos->pre;
 
-        while(insert != NULL && insert->price > key )
+        while(insert != NULL && insert->price > key)
         {
             insert = insert->pre;
         }
@@ -203,11 +203,20 @@ void SortBooks()
         }
         tmp1 = pos->next;
 
-        tmp2 = insert->next;
-        insert->next = pos;
-        pos->pre = insert;
-        pos->next = tmp2;
-        tmp2->pre = pos;
+        if(insert)
+        {
+            tmp2 = insert->next;
+            insert->next = pos;
+            pos->pre = insert;
+            pos->next = tmp2;
+            tmp2->pre = pos;
+        }
+        else
+        {
+            pos->next = head;
+            head->pre = pos;
+            head = pos;
+        }
 
         if(tmp1)
         {
