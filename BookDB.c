@@ -18,6 +18,7 @@ typedef struct _book
     char *category;
     char *author;
     int date;
+
     float price;
     struct _book *pre;
     struct _book *next;
@@ -27,11 +28,16 @@ Book *head, *tail;
 char filename[] = "archive.txt";
 
 void PrintBooks();
-void InsertBook(Book *tmp);
+void InsertBook(Book *book, Book *pos);
 void SaveInFile();
 void GetBooks();
-void AddBooks();
 void SortBooks();
+int Sort();
+void AddBooks();
+Book *FindBooks();
+void ChangeInfo();
+void DeleteBooks();
+int IsBook(int way, char *key, Book *pos);
 
 int main()
 {
@@ -41,21 +47,24 @@ int main()
     int date = 20160620;
     float price = 898.20;
 
-    //AddBooks();
     GetBooks();
+    AddBooks();
+    PrintBooks();
+    //FindBooks();
+    //ChangeInfo();
     SortBooks();
+    //DeleteBooks();
     PrintBooks();
     SaveInFile();
 }
 
 void AddBooks()
 {
-    char name[50] = "", category[20] = "", author[30] = "";
+    char name[60] = "", category[40] = "", author[40] = "";
     int date, ch;
     float price;
-    //head = (Book *)malloc(sizeof(Book));
-    head = NULL, tail = NULL;
-    Book *tmp = NULL;
+    Book *book = NULL;
+    Book *pos = tail->pre;
 
     printf("Now add books...\n");
     printf("Enter book's name, category, author, purchase date, price in order: \n=> ");
@@ -69,33 +78,16 @@ void AddBooks()
             continue;
         }
 
-        tmp = (Book *)malloc(sizeof(Book));
+        book = (Book *)malloc(sizeof(Book));
 
-        tmp->name = (char *)malloc(strlen(name)+1);
-        strcpy(tmp->name, name);
+        book->name = name;
+        book->category = category;
+        book->author = author;
+        book->date = date;
+        book->price = price;
 
-        tmp->category = (char *)malloc(strlen(category)+1);
-        strcpy(tmp->category, category);
-
-        tmp->author = (char *)malloc(strlen(author)+1);
-        strcpy(tmp->author, author);
-        
-
-        tmp->date = date;
-        tmp->price = price;
-
-        if (!head)
-        {
-            head = tmp;
-            tail = head;
-        }
-        else
-        {
-            tail->next = tmp;
-            tmp->pre = tail;
-            tail = tail->next;
-        }
-
+        InsertBook(book, pos);
+        pos = pos->next;
 
         printf("Enter book's name, category, author, purchase date, price in order: \n=> ");
     }
@@ -103,15 +95,145 @@ void AddBooks()
     printf("Add complete. Bye!\n\n");
 }
 
-void InsertBook(Book *tmp)
+Book *FindBooks()
 {
+    char key[60] = "";
+    int date, way;
+    Book *pos = head->next;
+    Book *find = NULL;
+
+    printf("Please input the way to find: ");
+    scanf("%d", &way);
+    printf("Please input key: ");
+    scanf("%s", key);
+
+    while(pos != tail)
+    {
+        if (IsBook(way, key, pos) == 0)
+        {
+            printf("%-30s%-20s%-20s%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
+            find = pos;
+        }
+
+        pos = pos->next;
+    }
+
+    return find;
+}
+
+int IsBook(int way, char *key, Book *pos)
+{
+    if (way == 1)
+    {
+        return strcmp(key, pos->name);
+    }
+    else if (way == 2)
+    {
+        return strcmp(key, pos->category);
+    }
+    else if (way == 3)
+    {
+        return strcmp(key, pos->author);
+    }
+    else
+        return -1;
+}
+
+void ChangeInfo()
+{
+    char info[60];
+    int date, way;
+    float price;
+    Book *change = NULL;
+
+    printf("CHANGE INFO\n");
+    printf("Choose which book to change...");
+    change = FindBooks();
+
+    printf("Choose which info to change, (name,category,author,date,price)|(1,2,3,4,5): ");
+    scanf("%d", &way);
+    printf("Change to: ");
+
+    if (way == 1 || way == 2 || way == 3)
+    {
+        scanf("%s", info);
+
+        if (way == 1)
+        {
+            free(change->name);
+            change->name = (char *)malloc(strlen(info)+1);
+            strcpy(change->name, info);
+        }
+        else if (way == 2)
+        {        
+            free(change->category);
+            change->category = (char *)malloc(strlen(info)+1);
+            strcpy(change->category, info);
+        }
+        else
+        {  
+            free(change->author);
+            change->author = (char *)malloc(strlen(info)+1);
+            strcpy(change->author, info);
+        }
+    }
+    else if (way == 4)
+    {
+        scanf("%d", &date);
+        change->date = date;
+    }
+    else
+    {
+        scanf("%f", &price);
+        change->price = price;
+    }
+
+    printf("Record changed to: ");
+    printf("%-30s%-20s%-20s%8d\t%.2f\n", change->name, change->category, change->author, change->date, change->price);
+}
+
+void DeleteBooks()
+{
+    Book *delete = NULL;
+
+    printf("DELETE INFO\n");
+    printf("Choose which book to delete...");
+    delete = FindBooks();
+
+    delete->pre->next = delete->next;
+    delete->next->pre = delete->pre;
+    free(delete);
+}
     
+void InsertBook(Book *book, Book *pos)
+{
+    Book *tmp = NULL, *pt = NULL;
+        
+    tmp = (Book *)malloc(sizeof(Book));
+
+    tmp->name = (char *)malloc(strlen(book->name)+1);
+    strcpy(tmp->name, book->name);
+
+    tmp->category = (char *)malloc(strlen(book->category)+1);
+    strcpy(tmp->category, book->category);
+
+    tmp->author = (char *)malloc(strlen(book->author)+1);
+    strcpy(tmp->author, book->author);
+        
+    tmp->date = book->date;
+    tmp->price = book->price;
+
+    pt = pos->next;
+    pos->next = tmp;
+    tmp->pre = pos;
+    tmp->next = pt;
+    pt->pre = tmp;
 }
 
 void SaveInFile()
 {
     FILE *fp;
-    Book *pos = head;
+    Book *pos = head->next;
 
     if((fp=fopen(filename,"w"))==NULL)
     {
@@ -119,7 +241,7 @@ void SaveInFile()
         exit(1);
     }
 
-    while(pos)
+    while(pos != tail)
     {
         fprintf(fp, "%s\t%s\t%s\t%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
         pos = pos->next;
@@ -132,11 +254,17 @@ void SaveInFile()
 void GetBooks()
 {
     FILE *fp;
-    char name[50] = "", category[20] = "", author[30] = "";
+    char name[60] = "", category[40] = "", author[40] = "";
     int date, ch;
     float price;
-    head = NULL, tail = NULL;
-    Book *tmp = NULL;
+
+    head = (Book *)malloc(sizeof(Book));
+    tail = (Book *)malloc(sizeof(Book));
+    head->next = tail;
+    tail->pre = head;
+
+    Book *book = NULL;
+    Book *pos = tail->pre;
     
     if((fp=fopen(filename,"r"))==NULL)
     {
@@ -146,97 +274,62 @@ void GetBooks()
     
     while((ch = fscanf(fp, "%s %s %s %d %f", name, category, author, &date, &price)) != EOF)
     { 
-        tmp = (Book *)malloc(sizeof(Book));
+        book = (Book *)malloc(sizeof(Book));
 
-        tmp->name = (char *)malloc(strlen(name)+1);
-        strcpy(tmp->name, name);
+        book->name = name;
+        book->category = category;
+        book->author = author;
+        book->date = date;
+        book->price = price;
 
-        tmp->category = (char *)malloc(strlen(category)+1);
-        strcpy(tmp->category, category);
-
-        tmp->author = (char *)malloc(strlen(author)+1);
-        strcpy(tmp->author, author);
-        
-
-        tmp->date = date;
-        tmp->price = price;
-
-        if (!head)
-        {
-            head = tmp;
-            tail = head;
-        }
-        else
-        {
-            tail->next = tmp;
-            tmp->pre = tail;
-            tail = tail->next;
-        }
+        InsertBook(book, pos);
+        pos = pos->next;
     }
 
-    printf("Books getted.");
+    printf("Books getted.\n");
 }
 
 void SortBooks()
 {
-    if (head == NULL || head->next == NULL)
+    if (head->next == tail || head->next == tail->pre)
         return;
 
-    int key = 0;
+    float key = 0;
     Book *pos, *insert;
 
-    for(pos = head->next; pos != NULL; pos = pos->next)
+    for(pos = head->next->next; pos != tail; pos = pos->next)
     {
         Book *tmp1, *tmp2;
         key = pos->price;
         insert = pos->pre;
 
-        while(insert != NULL && insert->price > key)
+        while(insert != head && insert->price > key)
         {
             insert = insert->pre;
         }
 
         pos->pre->next = pos->next;
-        if(pos->next)
-        {
-            pos->next->pre = pos->pre;
-        }
+        pos->next->pre = pos->pre;
         tmp1 = pos->next;
 
-        if(insert)
-        {
-            tmp2 = insert->next;
-            insert->next = pos;
-            pos->pre = insert;
-            pos->next = tmp2;
-            tmp2->pre = pos;
-        }
-        else
-        {
-            pos->next = head;
-            head->pre = pos;
-            head = pos;
-        }
+        tmp2 = insert->next;
+        insert->next = pos;
+        pos->pre = insert;
+        pos->next = tmp2;
+        tmp2->pre = pos;
 
-        if(tmp1)
-        {
-            pos = tmp1->pre;
-        }
-        else
-        {
-            pos = tail;
-        }
+        pos = tmp1->pre;
     }
 }
 
 void PrintBooks()
 {
-    Book *pos = head;
+    Book *pos = head->next;
 
-    printf("书名\t类别\t作者\t购买日期\t价格\n");
-    while(pos)
+    printf("书名\t\t\t类别\t\t作者\t\t购买日期\t价格\n");
+    while(pos != tail)
     {
-        printf("%s\t%s\t%s\t%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
+        printf("%-30s%-20s%-20s%8d\t%.2f\n", pos->name, pos->category, pos->author, pos->date, pos->price);
 
         pos = pos->next;
     }
