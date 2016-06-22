@@ -1,0 +1,4 @@
+在Linux（Ubuntu 14.04）下使用gcc编译通过
+BookDB.c        代码文件
+archive.txt     数据文件，存储图书数据
+若要对中文按拼音排序，需要对locale中的对应项进行配置
